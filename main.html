@@ -1,111 +1,366 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Pifko_CatchFresh</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <link rel="manifest" href="manifest.webmanifest">
-  </head>
-  <body>
-    <div id="unity-container">
-      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-    </div>
-    <script>
-      window.addEventListener("load", function () {
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("ServiceWorker.js");
-        }
-      });
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Pifko_CatchFresh</title>
+	<style>
+		:root {
+			--yellow: #ffd83d;
+			--yellow-dark: #ffcb1f;
+			--green-1: #d8f34a;
+			--green-2: #c3e63d;
+			--text: #111111;
+			--shadow: #111111;
+			--progress: 0%;
+		}
 
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var warningBanner = document.querySelector("#unity-warning");
+		* { box-sizing: border-box; }
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
+		html, body {
+			margin: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background: #111;
+			font-family: Inter, Arial, Helvetica, sans-serif;
+			-webkit-text-size-adjust: 100%;
+			text-size-adjust: 100%;
+		}
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/pifko_test.loader.js";
-      var config = {
-        arguments: [],
-        dataUrl: buildUrl + "/pifko_test.data",
-        frameworkUrl: buildUrl + "/pifko_test.framework.js",
-        codeUrl: buildUrl + "/pifko_test.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "Pifko_CatchFresh",
-        productVersion: "1.2",
-        showBanner: unityShowBanner,
-        // errorHandler: function(err, url, line) {
-        //    alert("error " + err + " occurred at line " + line);
-        //    // Return 'true' if you handled this error and don't want Unity
-        //    // to process it further, 'false' otherwise.
-        //    return true;
-        // },
-      };
+		body {
+			position: fixed;
+			inset: 0;
+		}
 
-      // By default Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
+		#unity-wrap {
+			position: fixed;
+			inset: 0;
+			width: 100vw;
+			height: 100vh;
+			overflow: hidden;
+			background: #111;
+		}
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-      }
+		#unity-canvas {
+			position: absolute;
+			inset: 0;
+			display: block;
+			width: 100%;
+			height: 100%;
+			background: transparent;
+			z-index: 1;
+		}
 
+		.screen {
+			position: absolute;
+			inset: 0;
+			z-index: 5;
+			display: flex;
+			flex-direction: column;
+			width: 100%;
+			height: 100%;
+			padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+			overflow: hidden;
+			transition: opacity .35s ease, visibility .35s ease;
+		}
 
-      loadingBar.style.display = "block";
+		.screen.hidden {
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+		}
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          loadingBar.style.display = "none";
-        }).catch((message) => {
-          alert(message);
-        });
-      };
-      document.body.appendChild(script);
-    </script>
-  </body>
+		.start-screen {
+			color: var(--text);
+			background:
+					radial-gradient(circle at 16% 24%, rgba(255, 227, 93, .22) 0 7%, rgba(255, 227, 93, 0) 7.5%),
+					radial-gradient(circle at 76% 18%, rgba(255, 227, 93, .18) 0 5%, rgba(255, 227, 93, 0) 5.5%),
+					radial-gradient(circle at 28% 40%, rgba(255, 227, 93, .14) 0 8%, rgba(255, 227, 93, 0) 8.5%),
+					radial-gradient(circle at 84% 34%, rgba(255, 227, 93, .2) 0 6%, rgba(255, 227, 93, 0) 6.5%),
+					radial-gradient(circle at 68% 66%, rgba(255, 227, 93, .18) 0 4%, rgba(255, 227, 93, 0) 4.5%),
+					radial-gradient(circle at 11% 76%, rgba(255, 227, 93, .16) 0 5%, rgba(255, 227, 93, 0) 5.5%),
+					radial-gradient(circle at 88% 78%, rgba(255, 227, 93, .14) 0 3.8%, rgba(255, 227, 93, 0) 4.2%),
+					radial-gradient(circle at 48% 84%, rgba(255, 227, 93, .14) 0 2.8%, rgba(255, 227, 93, 0) 3.2%),
+					#f7f6f1;
+		}
+
+		.loading-screen {
+			align-items: center;
+			justify-content: center;
+			color: var(--text);
+			background:
+					radial-gradient(circle at 14% 12%, rgba(244, 255, 141, .22) 0 1%, rgba(244, 255, 141, 0) 1.2%),
+					radial-gradient(circle at 22% 24%, rgba(244, 255, 141, .22) 0 5%, rgba(244, 255, 141, 0) 5.3%),
+					radial-gradient(circle at 81% 21%, rgba(244, 255, 141, .22) 0 4.5%, rgba(244, 255, 141, 0) 4.9%),
+					radial-gradient(circle at 12% 58%, rgba(244, 255, 141, .18) 0 6%, rgba(244, 255, 141, 0) 6.4%),
+					radial-gradient(circle at 86% 70%, rgba(244, 255, 141, .18) 0 5%, rgba(244, 255, 141, 0) 5.4%),
+					radial-gradient(circle at 52% 82%, rgba(244, 255, 141, .16) 0 3%, rgba(244, 255, 141, 0) 3.3%),
+					radial-gradient(circle at 38% 67%, rgba(244, 255, 141, .18) 0 1.4%, rgba(244, 255, 141, 0) 1.7%),
+					radial-gradient(circle at 68% 46%, rgba(244, 255, 141, .16) 0 1.2%, rgba(244, 255, 141, 0) 1.6%),
+					linear-gradient(180deg, var(--green-2), var(--green-1));
+		}
+
+		.brand {
+			display: flex;
+			align-items: center;
+			min-height: 52px;
+			margin-top: 8px;
+			padding-inline: clamp(10px, 4vw, 24px);
+		}
+
+		.brand img {
+			display: block;
+			width: auto;
+			height: clamp(28px, 6vw, 44px);
+			max-width: min(55vw, 280px);
+			object-fit: contain;
+			object-position: left center;
+		}
+
+		.hero {
+			margin-top: clamp(18px, 4vh, 34px);
+			padding-inline: clamp(10px, 4vw, 24px);
+			text-align: left;
+		}
+
+		.hero h1 {
+			margin: 0;
+			font-size: clamp(44px, 8vw, 84px);
+			line-height: .94;
+			letter-spacing: -.06em;
+			font-weight: 900;
+			max-width: 7ch;
+		}
+
+		.hero p {
+			margin: 18px 0 0;
+			font-size: clamp(22px, 4vw, 42px);
+			line-height: 1.04;
+			font-weight: 700;
+			letter-spacing: -.04em;
+			max-width: 11ch;
+		}
+
+		.art-start {
+			flex: 1;
+			display: flex;
+			align-items: flex-end;
+			justify-content: center;
+			min-height: 0;
+			padding: 8px 0 12px;
+		}
+
+		.art-loading-wrap {
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			margin: 0 auto 28px;
+		}
+
+		.art-start img {
+			display: block;
+			width: min(94vw, 700px);
+			max-height: 100%;
+			object-fit: contain;
+			object-position: bottom center;
+			user-select: none;
+			-webkit-user-drag: none;
+		}
+
+		.art-loading {
+			display: block;
+			width: min(62vw, 520px);
+			max-width: 520px;
+			min-width: 220px;
+			object-fit: contain;
+			object-position: center bottom;
+			user-select: none;
+			-webkit-user-drag: none;
+		}
+
+		.bottom-bar {
+			position: relative;
+			z-index: 6;
+			padding: 0 clamp(10px, 4vw, 24px) max(10px, env(safe-area-inset-bottom));
+		}
+
+		.play-btn {
+			width: 100%;
+			min-height: 72px;
+			border: 3px solid #111;
+			border-radius: 24px;
+			background: var(--yellow);
+			color: #111;
+			font-size: clamp(22px, 4vw, 34px);
+			font-weight: 900;
+			letter-spacing: -.03em;
+			box-shadow: 0 8px 0 var(--shadow);
+			cursor: pointer;
+			transition: transform .15s ease, box-shadow .15s ease;
+		}
+
+		.play-btn:active {
+			transform: translateY(4px);
+			box-shadow: 0 4px 0 var(--shadow);
+		}
+
+		.loading-inner {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			height: 100%;
+			text-align: center;
+			padding: 24px;
+		}
+
+		.progress-shell {
+			width: min(240px, 62vw);
+			height: 30px;
+			margin: 0 auto;
+			padding: 3px;
+			border: 3px solid #111;
+			border-radius: 999px;
+			background: #fff;
+			overflow: hidden;
+			box-shadow: 0 3px 0 rgba(17,17,17,.16);
+		}
+
+		.progress-fill {
+			width: var(--progress);
+			height: 100%;
+			border-radius: 999px;
+			background: linear-gradient(180deg, #ffe15b, #ffcc2e);
+			transition: width .2s ease;
+		}
+
+		.loading-title {
+			margin: 18px 0 0;
+			padding: 0 18px;
+			font-size: clamp(20px, 3.6vw, 38px);
+			line-height: 1.15;
+			font-weight: 900;
+			letter-spacing: -.05em;
+			max-width: 18ch;
+		}
+
+		.unity-loaded .screen {
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+		}
+
+		@media (min-aspect-ratio: 1/1) {
+			.hero h1 { font-size: clamp(42px, 5.2vw, 72px); }
+			.hero p { font-size: clamp(20px, 2.7vw, 34px); }
+			.play-btn { min-height: 64px; }
+			.art-loading { width: min(34vw, 400px); }
+			.art-start img { width: min(58vw, 760px); }
+		}
+	</style>
+</head>
+<body>
+<div id="unity-wrap">
+	<canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+
+	<section id="start-screen" class="screen start-screen">
+		<div class="brand">
+			<img id="brand-logo" src="img/logo.png" alt="Логотип" />
+		</div>
+
+		<div class="hero">
+			<h1>Ловец<br>Свежести!</h1>
+			<p>Налови скидку за 30 секунд</p>
+		</div>
+
+		<div class="art-start">
+			<img id="start-illustration" src="img/pifkoMens.png" alt="Главная иллюстрация" />
+		</div>
+
+		<div class="bottom-bar">
+			<button id="start-btn" class="play-btn" type="button">Играть</button>
+		</div>
+	</section>
+
+	<section id="loading-screen" class="screen loading-screen hidden">
+		<div class="loading-inner">
+			<div class="art-loading-wrap">
+				<img id="loading-illustration" class="art-loading" src="img/loadingImg.png" alt="Иллюстрация загрузки" />
+			</div>
+
+			<div class="progress-shell" aria-label="Прогресс загрузки">
+				<div id="progress-fill" class="progress-fill"></div>
+			</div>
+
+			<div class="loading-title">Если что — это всё ради скидки</div>
+		</div>
+	</section>
+</div>
+
+<script>
+	const wrap = document.getElementById('unity-wrap');
+	const canvas = document.getElementById('unity-canvas');
+	const startScreen = document.getElementById('start-screen');
+	const loadingScreen = document.getElementById('loading-screen');
+	const startBtn = document.getElementById('start-btn');
+	const progressFill = document.getElementById('progress-fill');
+
+	const buildUrl = 'Build';
+	const loaderUrl = buildUrl + '/pifko_test.loader.js';
+
+	const config = {
+		dataUrl: buildUrl + '/pifko_test.data',
+		frameworkUrl: buildUrl + '/pifko_test.framework.js',
+		codeUrl: buildUrl + '/pifko_test.wasm',
+		streamingAssetsUrl: 'StreamingAssets',
+		companyName: 'DefaultCompany',
+		productName: 'Pifko_CatchFresh',
+		productVersion: '1.2',
+		matchWebGLToCanvasSize: true
+	};
+
+	let unityStarted = false;
+
+	function setProgress(value) {
+		const percent = Math.max(0, Math.min(100, Math.round(value * 100)));
+		document.documentElement.style.setProperty('--progress', percent + '%');
+		progressFill.style.width = percent + '%';
+	}
+
+	function startUnity() {
+		if (unityStarted) return;
+		unityStarted = true;
+		startScreen.classList.add('hidden');
+		loadingScreen.classList.remove('hidden');
+		setProgress(0);
+
+		const script = document.createElement('script');
+		script.src = loaderUrl;
+		script.onload = () => {
+			createUnityInstance(canvas, config, (progress) => setProgress(progress))
+					.then(() => {
+						wrap.classList.add('unity-loaded');
+						setProgress(1);
+					})
+					.catch((message) => {
+						alert(message);
+						unityStarted = false;
+						startScreen.classList.remove('hidden');
+						loadingScreen.classList.add('hidden');
+					});
+		};
+		script.onerror = () => {
+			unityStarted = false;
+			startScreen.classList.remove('hidden');
+			loadingScreen.classList.add('hidden');
+			alert('Не удалось загрузить Unity loader');
+		};
+		document.body.appendChild(script);
+	}
+
+	startBtn.addEventListener('click', startUnity, { passive: true });
+</script>
+</body>
 </html>
